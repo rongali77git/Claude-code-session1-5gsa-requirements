@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+
+  # ── Neo4j Knowledge Graph ───────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5.19-community
+    container_name: 5gsa-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-changeme}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 1G
+    ports:
+      - "7474:7474"   # Neo4j Browser UI
+      - "7687:7687"   # Bolt
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-changeme}", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── pgvector (production vector store) ────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: 5gsa-pgvector
+    environment:
+      POSTGRES_DB:       vectordb
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── 5G SA Query App ────────────────────────────────────────────────────────
+  app:
+    build: .
+    container_name: 5gsa-app
+    environment:
+      NEO4J_URI:             bolt://neo4j:7687
+      NEO4J_USER:            neo4j
+      NEO4J_PASSWORD:        ${NEO4J_PASSWORD:-changeme}
+      POSTGRES_HOST:         postgres
+      POSTGRES_PASSWORD:     ${POSTGRES_PASSWORD:-changeme}
+      CORP_LLM_ENDPOINT:     ${CORP_LLM_ENDPOINT}
+      CORP_LLM_API_KEY:      ${CORP_LLM_API_KEY}
+      CORP_LLM_MODEL_NAME:   ${CORP_LLM_MODEL_NAME}
+      VECTOR_STORE_BACKEND:  pgvector
+      EMBEDDING_MODEL:       BAAI/bge-large-en-v1.5
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data          # mount your docx folder here
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  pgvector_data:
+  hf_cache:

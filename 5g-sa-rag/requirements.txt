@@ -1,0 +1,42 @@
+# Core
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+pydantic==2.7.0
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+
+# Document parsing
+python-docx==1.1.0
+unstructured[docx]==0.13.0
+
+# NLP / NER
+spacy==3.7.4
+# Run: python -m spacy download en_core_web_trf
+
+# Embeddings (local, no data leaves your network)
+sentence-transformers==3.0.1
+# BGE model: BAAI/bge-large-en-v1.5  (best for technical docs)
+torch==2.3.0
+
+# Vector store
+psycopg2-binary==2.9.9
+pgvector==0.2.5
+chromadb==0.5.0           # fallback if no postgres
+
+# Knowledge graph
+neo4j==5.20.0
+
+# Retrieval & orchestration
+langchain==0.2.0
+langchain-community==0.2.0
+langchain-neo4j==0.1.0
+
+# API / utilities
+httpx==0.27.0
+tenacity==8.3.0
+structlog==24.1.0
+rich==13.7.1
+
+# Testing
+pytest==8.2.0
+pytest-asyncio==0.23.6

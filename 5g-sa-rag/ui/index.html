@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>5G SA Requirements Query</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif;
+           background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+    header { background: #1a1f2e; border-bottom: 1px solid #2d3748;
+             padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 1.1rem; font-weight: 600; color: #63b3ed; }
+    .badge { font-size: 0.7rem; background: #2d3748; color: #90cdf4;
+             padding: 2px 8px; border-radius: 12px; }
+
+    .layout { display: grid; grid-template-columns: 260px 1fr; height: calc(100vh - 57px); }
+
+    /* Sidebar */
+    aside { background: #151821; border-right: 1px solid #2d3748;
+            padding: 16px; overflow-y: auto; }
+    aside h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+               color: #718096; margin-bottom: 12px; }
+    .example-query { background: #1a1f2e; border: 1px solid #2d3748;
+                     border-radius: 6px; padding: 10px 12px; margin-bottom: 8px;
+                     font-size: 0.82rem; color: #a0aec0; cursor: pointer;
+                     transition: all 0.15s; line-height: 1.4; }
+    .example-query:hover { background: #252d3d; border-color: #63b3ed; color: #e2e8f0; }
+
+    .filter-section { margin-top: 20px; }
+    .filter-section label { font-size: 0.75rem; color: #718096; display: block;
+                            margin-bottom: 6px; }
+    select { width: 100%; background: #1a1f2e; border: 1px solid #2d3748;
+             color: #e2e8f0; border-radius: 6px; padding: 7px 10px; font-size: 0.82rem; }
+
+    .stats-section { margin-top: 20px; }
+    .stat-card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 6px;
+                 padding: 10px 12px; margin-bottom: 8px; }
+    .stat-card .label { font-size: 0.7rem; color: #718096; text-transform: uppercase; }
+    .stat-card .value { font-size: 1.2rem; font-weight: 600; color: #63b3ed; }
+
+    /* Main */
+    main { display: flex; flex-direction: column; padding: 20px; gap: 16px;
+           overflow-y: auto; }
+
+    .query-box { display: flex; gap: 10px; }
+    textarea { flex: 1; background: #1a1f2e; border: 1px solid #2d3748;
+               color: #e2e8f0; border-radius: 8px; padding: 12px 14px;
+               font-size: 0.9rem; resize: none; height: 80px; line-height: 1.5; }
+    textarea:focus { outline: none; border-color: #63b3ed; }
+    textarea::placeholder { color: #4a5568; }
+
+    .btn-query { background: #3182ce; color: white; border: none;
+                 border-radius: 8px; padding: 0 20px; font-size: 0.9rem;
+                 font-weight: 600; cursor: pointer; min-width: 90px; transition: 0.15s; }
+    .btn-query:hover:not(:disabled) { background: #2b6cb0; }
+    .btn-query:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .route-badge { display: inline-flex; align-items: center; gap: 6px;
+                   font-size: 0.72rem; padding: 3px 10px; border-radius: 12px;
+                   font-weight: 600; }
+    .route-graph  { background: #2d3748; color: #f6ad55; }
+    .route-vector { background: #2d3748; color: #68d391; }
+    .route-both   { background: #2d3748; color: #76e4f7; }
+
+    .answer-box { background: #1a1f2e; border: 1px solid #2d3748;
+                  border-radius: 8px; padding: 18px; flex: 1;
+                  font-size: 0.88rem; line-height: 1.7; white-space: pre-wrap;
+                  color: #e2e8f0; min-height: 200px; }
+    .answer-meta { display: flex; gap: 12px; align-items: center;
+                   margin-bottom: 12px; flex-wrap: wrap; }
+    .meta-chip { font-size: 0.7rem; color: #718096;
+                 background: #0f1117; border: 1px solid #2d3748;
+                 border-radius: 4px; padding: 2px 8px; }
+
+    .loading { color: #4a5568; font-style: italic; }
+    .error   { color: #fc8181; }
+
+    .history-item { background: #1a1f2e; border: 1px solid #2d3748;
+                    border-radius: 8px; padding: 14px; }
+    .history-q { font-size: 0.82rem; color: #90cdf4; margin-bottom: 8px;
+                 font-weight: 600; }
+    .history-a { font-size: 0.84rem; color: #a0aec0; white-space: pre-wrap;
+                 line-height: 1.6; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🔬 5G SA Requirements Query System</h1>
+  <span class="badge">GraphRAG + Corporate LLM</span>
+</header>
+
+<div class="layout">
+  <aside>
+    <h3>Example Queries</h3>
+    <div class="example-query" onclick="setQuery(this)">Which test cases cover REQ-SA-042?</div>
+    <div class="example-query" onclick="setQuery(this)">List all uncovered requirements for Verizon</div>
+    <div class="example-query" onclick="setQuery(this)">Compare QoS requirements across all carriers</div>
+    <div class="example-query" onclick="setQuery(this)">Summarize authentication test plan for T-Mobile</div>
+    <div class="example-query" onclick="setQuery(this)">Are there any conflicts in handover requirements between AT&T and Verizon?</div>
+    <div class="example-query" onclick="setQuery(this)">What are all Critical priority requirements?</div>
+    <div class="example-query" onclick="setQuery(this)">Which requirements involve the AMF?</div>
+
+    <div class="filter-section">
+      <label>Carrier Filter</label>
+      <select id="carrierFilter">
+        <option value="">All Carriers</option>
+        <option>Verizon</option>
+        <option>T-Mobile</option>
+        <option>AT&T</option>
+        <option>Dish</option>
+      </select>
+    </div>
+
+    <div class="stats-section">
+      <h3 style="margin-top:0">Coverage</h3>
+      <div id="statsArea">
+        <div class="stat-card">
+          <div class="label">Status</div>
+          <div class="value" id="statStatus">—</div>
+        </div>
+      </div>
+      <button onclick="loadStats()" style="width:100%;margin-top:8px;background:#1a1f2e;
+        border:1px solid #2d3748;color:#90cdf4;border-radius:6px;padding:6px;
+        font-size:0.78rem;cursor:pointer;">Refresh Stats</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="query-box">
+      <textarea id="queryInput"
+        placeholder="Ask about requirements, test coverage, carrier comparisons...&#10;e.g. Which test cases cover REQ-SA-042?"></textarea>
+      <button class="btn-query" id="queryBtn" onclick="runQuery()">Ask</button>
+    </div>
+
+    <div id="currentAnswer" style="display:none">
+      <div class="answer-meta" id="answerMeta"></div>
+      <div class="answer-box" id="answerText"></div>
+    </div>
+
+    <div id="history"></div>
+  </main>
+</div>
+
+<script>
+  const API = '';   // same-origin; change to http://localhost:8000 if running separately
+  let conversationHistory = [];
+
+  function setQuery(el) {
+    document.getElementById('queryInput').value = el.textContent;
+    document.getElementById('queryInput').focus();
+  }
+
+  async function runQuery() {
+    const query = document.getElementById('queryInput').value.trim();
+    if (!query) return;
+
+    const btn = document.getElementById('queryBtn');
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    const carrier = document.getElementById('carrierFilter').value || null;
+
+    document.getElementById('currentAnswer').style.display = 'block';
+    document.getElementById('answerText').innerHTML = '<span class="loading">Querying knowledge graph and documents...</span>';
+    document.getElementById('answerMeta').innerHTML = '';
+
+    try {
+      const res = await fetch(`${API}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          carrier_filter: carrier,
+          top_k: 8,
+          conversation_history: conversationHistory,
+        }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+
+      // Update conversation history for multi-turn
+      conversationHistory.push({ role: 'user', content: query });
+      conversationHistory.push({ role: 'assistant', content: data.answer });
+      if (conversationHistory.length > 20) conversationHistory = conversationHistory.slice(-20);
+
+      // Display
+      const routeClass = `route-${data.route_used}`;
+      document.getElementById('answerMeta').innerHTML = `
+        <span class="route-badge ${routeClass}">Route: ${data.route_used.toUpperCase()}</span>
+        <span class="meta-chip">Graph rows: ${data.graph_results_count}</span>
+        <span class="meta-chip">Vector chunks: ${data.vector_chunks_count}</span>
+        <button onclick="clearHistory()" style="margin-left:auto;background:none;border:none;
+          color:#718096;font-size:0.75rem;cursor:pointer;">Clear history</button>
+      `;
+      document.getElementById('answerText').textContent = data.answer;
+
+    } catch (e) {
+      document.getElementById('answerText').innerHTML =
+        `<span class="error">Error: ${e.message}</span>`;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Ask';
+  }
+
+  function clearHistory() {
+    conversationHistory = [];
+    document.getElementById('currentAnswer').style.display = 'none';
+  }
+
+  async function loadStats() {
+    try {
+      const res = await fetch(`${API}/graph/coverage`);
+      const data = await res.json();
+      const html = data.map(r => `
+        <div class="stat-card">
+          <div class="label">${r.carrier}</div>
+          <div class="value">${r.covered_requirements}/${r.total_requirements}</div>
+          <div style="font-size:0.7rem;color:${r.gap > 0 ? '#fc8181' : '#68d391'}">
+            ${r.gap > 0 ? `⚠ ${r.gap} gaps` : '✓ Full coverage'}
+          </div>
+        </div>`).join('');
+      document.getElementById('statsArea').innerHTML = html;
+      document.getElementById('statStatus').textContent = '';
+    } catch (e) {
+      document.getElementById('statStatus').textContent = 'Error';
+    }
+  }
+
+  // Keyboard shortcut: Ctrl+Enter to submit
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('queryInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) runQuery();
+    });
+    loadStats();
+  });
+</script>
+</body>
+</html>
