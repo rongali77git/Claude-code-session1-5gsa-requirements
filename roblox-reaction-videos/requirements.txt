@@ -1,0 +1,21 @@
+# Core video processing
+moviepi>=1.0.3
+Pillow>=10.0.0
+numpy>=1.24.0
+opencv-python>=4.8.0
+
+# YouTube API & downloading
+google-api-python-client>=2.100.0
+yt-dlp>=2024.1.0
+
+# Claude API for auto-commentary
+anthropic>=0.34.0
+
+# Audio processing
+pydub>=0.25.1
+
+# CLI & utilities
+click>=8.1.0
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+requests>=2.31.0
